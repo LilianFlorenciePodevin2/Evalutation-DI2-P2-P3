@@ -1,13 +1,16 @@
-﻿using System.Security.Cryptography;
+﻿// AesEncryptionStrategy.cs
+using System;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace PasswordManager.API.Encryption
 {
     public class AesEncryptionStrategy : IEncryptionStrategy
     {
-        // Clé et IV pour AES (à sécuriser et externaliser)
-        private readonly byte[] _key = Encoding.UTF8.GetBytes("1234567890123456");
-        private readonly byte[] _iv = Encoding.UTF8.GetBytes("6543210987654321");
+        // Clé et IV fixes pour cet exemple (16 octets pour AES-128)
+        private readonly byte[] _key = Encoding.UTF8.GetBytes("0123456789abcdef");
+        private readonly byte[] _iv = Encoding.UTF8.GetBytes("abcdef9876543210");
 
         public string Encrypt(string plainText)
         {

@@ -7,7 +7,7 @@ namespace PasswordManager.API.Services
     public interface IPasswordService
     {
         Task<IEnumerable<PasswordResponseDto>> GetAllPasswordsAsync();
-        Task AddPasswordAsync(string plainPassword, int applicationId, string appType);
+        Task AddPasswordAsync(string accountName, string plainPassword, int applicationId);
         Task DeletePasswordAsync(int id);
     }
 }

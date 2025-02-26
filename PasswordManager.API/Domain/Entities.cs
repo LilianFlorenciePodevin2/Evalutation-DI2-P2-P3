@@ -8,6 +8,8 @@
         // Clé étrangère vers Application
         public int ApplicationId { get; set; }
         public Application Application { get; set; }
+        public string AccountName { get; set; }
+
     }
 
     public class Application

@@ -8,15 +8,18 @@ namespace PasswordManager.API.Encryption
 {
     public class RsaEncryptionStrategy : IEncryptionStrategy, IDisposable
     {
+        // Stocker le fichier de clés dans le répertoire de base de l'application
+        private static readonly string KeyFilePath = Path.Combine(AppContext.BaseDirectory, "rsa_keys.dat");
+
         private readonly RSA _rsa;
-        private const string KeyFilePath = "rsa_keys.dat"; // Fichier de stockage persistant
         private readonly IDataProtector _protector;
 
         public RsaEncryptionStrategy(IDataProtectionProvider dataProtectionProvider)
         {
-            // Crée un protector pour chiffrer/déchiffrer les clés
+            // Créer un protector pour chiffrer/déchiffrer les clés
             _protector = dataProtectionProvider.CreateProtector("PasswordManager.RsaEncryptionStrategy");
 
+            // Créer l'instance RSA avec une taille de 2048 bits
             _rsa = RSA.Create(2048);
 
             if (File.Exists(KeyFilePath))
@@ -29,7 +32,7 @@ namespace PasswordManager.API.Encryption
             else
             {
                 // Générer une nouvelle paire de clés et la sauvegarder de façon sécurisée
-                string xmlKeys = _rsa.ToXmlString(true);
+                string xmlKeys = _rsa.ToXmlString(true); // inclut la clé privée
                 string encryptedXml = _protector.Protect(xmlKeys);
                 File.WriteAllText(KeyFilePath, encryptedXml, Encoding.UTF8);
             }

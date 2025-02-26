@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// Services/PasswordService.cs
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using PasswordManager.API.Domain;
@@ -24,39 +25,38 @@ namespace PasswordManager.API.Services
 
         public async Task<IEnumerable<PasswordResponseDto>> GetAllPasswordsAsync()
         {
-            // Récupère les mots de passe avec leur application (inclusion via EF Core)
             var passwords = await _passwordRepository.GetAllAsync();
-
-            // Mappe les entités vers des DTOs en décryptant le mot de passe
             var dtos = passwords.Select(p => new PasswordResponseDto
             {
                 Id = p.Id,
+                AccountName = p.AccountName,
                 ApplicationId = p.ApplicationId,
                 AppName = p.Application.AppName,
                 AppType = p.Application.AppType,
                 PlainPassword = _encryptionService.Decrypt(p.EncryptedValue, p.Application.AppType)
             });
-
             return dtos;
         }
 
-        public async Task AddPasswordAsync(string plainPassword, int applicationId, string appType)
+        public async Task AddPasswordAsync(string accountName, string plainPassword, int applicationId)
         {
+            // Récupérer l'application par son ID
             var application = await _applicationRepository.GetByIdAsync(applicationId);
             if (application == null)
             {
-                throw new Exception("L'application spécifiée n'existe pas.");
+                throw new System.Exception("Application non trouvée");
             }
 
-            var encryptedPassword = _encryptionService.Encrypt(plainPassword, appType);
+            // Utiliser le type d'application récupéré pour le chiffrement
+            var encryptedPassword = _encryptionService.Encrypt(plainPassword, application.AppType);
             var password = new Password
             {
+                AccountName = accountName,
                 EncryptedValue = encryptedPassword,
                 ApplicationId = applicationId
             };
             await _passwordRepository.AddAsync(password);
         }
-
 
         public async Task DeletePasswordAsync(int id)
         {

@@ -1,4 +1,4 @@
-﻿// Services/EncryptionService.cs
+﻿// EncryptionService.cs
 using System;
 using PasswordManager.API.Encryption;
 
@@ -21,8 +21,8 @@ namespace PasswordManager.API.Services
                 return _aesStrategy.Encrypt(plainText);
             else if (appType.Equals("Professionnelle", StringComparison.OrdinalIgnoreCase))
                 return _rsaStrategy.Encrypt(plainText);
-
-            throw new ArgumentException("Type d'application inconnu");
+            else
+                throw new Exception("Type d'application inconnu");
         }
 
         public string Decrypt(string cipherText, string appType)
@@ -31,8 +31,8 @@ namespace PasswordManager.API.Services
                 return _aesStrategy.Decrypt(cipherText);
             else if (appType.Equals("Professionnelle", StringComparison.OrdinalIgnoreCase))
                 return _rsaStrategy.Decrypt(cipherText);
-
-            throw new ArgumentException("Type d'application inconnu");
+            else
+                throw new Exception("Type d'application inconnu");
         }
     }
 }

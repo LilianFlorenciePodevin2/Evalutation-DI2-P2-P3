@@ -24,14 +24,6 @@ import { CommonModule } from '@angular/common';
         </label>
       </div>
       <div>
-        <label>Type d'application:
-          <select [(ngModel)]="selectedAppType" name="selectedAppType" required>
-            <option value="Grand public">Grand public</option>
-            <option value="Professionnelle">Professionnelle</option>
-          </select>
-        </label>
-      </div>
-      <div>
         <label>Mot de passe:
           <input type="text" [(ngModel)]="newPassword" name="newPassword" required>
         </label>

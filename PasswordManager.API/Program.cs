@@ -15,23 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Ajout de Data Protection
 builder.Services.AddDataProtection();
-
-// Configuration EF Core et chaîne de connexion depuis appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Enregistrement des repositories
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
 builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
 
-// Enregistrement des stratégies de chiffrement
+// Enregistrer AES en Scoped et RSA en Singleton
 builder.Services.AddScoped<AesEncryptionStrategy>();
-builder.Services.AddSingleton<RsaEncryptionStrategy>(); // Singleton pour persistance des clés
+builder.Services.AddSingleton<RsaEncryptionStrategy>();
 
-// Enregistrement du service de chiffrement dynamique
 builder.Services.AddScoped<EncryptionService>();
-
-// Enregistrement des services métiers
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 
