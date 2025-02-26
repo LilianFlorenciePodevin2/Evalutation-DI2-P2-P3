@@ -1,40 +1,125 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using PasswordManager.API.Data;
-using PasswordManager.API.Repositories.Interfaces;
+using PasswordManager.API.Middlewares;
 using PasswordManager.API.Repositories;
-using PasswordManager.API.Services.Encryption;
-using PasswordManager.API.Services.Interfaces;
 using PasswordManager.API.Services;
+using PasswordManager.API.Encryption;
+using Microsoft.AspNetCore.DataProtection;
+using System.Collections.Generic;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuration du DbContext avec la chaîne de connexion
+// Ajout de Data Protection
+builder.Services.AddDataProtection();
+
+// Configuration EF Core et chaîne de connexion depuis appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Ajout des services pour les controllers et Swagger si besoin
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Injection de dépendances pour vos services et repositories
+// Enregistrement des repositories
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
+builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+
+// Enregistrement des stratégies de chiffrement
+builder.Services.AddScoped<AesEncryptionStrategy>();
+builder.Services.AddSingleton<RsaEncryptionStrategy>(); // Singleton pour persistance des clés
+
+// Enregistrement du service de chiffrement dynamique
+builder.Services.AddScoped<EncryptionService>();
+
+// Enregistrement des services métiers
 builder.Services.AddScoped<IPasswordService, PasswordService>();
-// Ajoutez les services de chiffrement ici également, par exemple pour AES et RSA
-builder.Services.AddScoped<IAEService, AESEncryptionService>();
-builder.Services.AddScoped<IRSAService, RSAEncryptionService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
+
+builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder
+            .WithOrigins("http://localhost:4200") // Angular app URL
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
+// Configuration de Swagger avec sécurité API Key
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordManager.API", Version = "v1" });
+
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "Entrez votre clé API. Exemple: SuperSecretAPIKey2025",
+        In = ParameterLocation.Header,
+        Name = "x-api-key",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "ApiKeyScheme"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                },
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Configuration du middleware Swagger en développement
+// Seed de la base de données
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        // Exécuter les migrations si nécessaire
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate();
+
+        // Initialiser les données de seed
+        SeedData.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        // Vous pouvez loguer l'erreur ici
+        throw;
+    }
+}
+
+// Activation de Swagger en mode développement
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "PasswordManager.API v1");
+        c.RoutePrefix = "swagger";
+    });
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
+app.UseCors("AllowSpecificOrigin");
+
+// Middleware de clé API
+app.UseMiddleware<ApiKeyMiddleware>();
+
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
 
 app.Run();

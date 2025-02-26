@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "gGlBIvkEF5g=",
+  "dgSpecHash": "E+rJX55niys=",
   "success": true,
-  "projectFilePath": "C:\\Users\\lflorencie-podevin\\source\\repos\\Evalutation-DI2-P2-P3\\PasswordManager.API\\PasswordManager.API.csproj",
+  "projectFilePath": "C:\\Users\\lflorencie-podevin\\Source\\Repos\\Eval\\PasswordManager.API\\PasswordManager.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\lflorencie-podevin\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\lflorencie-podevin\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
